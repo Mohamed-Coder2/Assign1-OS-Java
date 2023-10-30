@@ -1,4 +1,7 @@
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Scanner;
@@ -6,14 +9,13 @@ import java.util.Scanner;
 public class Terminal {
 
     //Can u see the ned edit on gitHB ? :(
+    private static File currentDirectory = new File(System.getProperty("user.dir"));
 
     Parser parser;
     //Implement each command in a method, for example:
 
     public static String pwd(){
-        File file = new File("");
-        String path = file.getAbsolutePath();
-        return path;
+        return currentDirectory.getAbsolutePath();
     }
 
     public static void echo(String s){
@@ -88,9 +90,49 @@ public class Terminal {
 
     }
 
-    public static void cd(String[] args){
-        //...
+    public static void cd(){
+        currentDirectory = new File(System.getProperty("user.dir"));
     }
+
+    public static void cd(String path){
+        if(path.equals("..")){
+            Path parentPath = Paths.get(currentDirectory.getAbsolutePath()).getParent();
+            if(parentPath != null){
+                currentDirectory = parentPath.toFile();
+            }
+            else {
+                System.out.println("Already at root directory");
+            }
+        }
+        else {
+            File newDirectory = new File(currentDirectory, path);
+            if(newDirectory.exists() && newDirectory.isDirectory()){
+                currentDirectory = newDirectory;
+            }
+            else{
+                System.out.println("Directory not found: " + path);
+            }
+        }
+    }
+
+    public static void touch(String path){
+        File newFile = new File(currentDirectory, path);
+    
+        try{
+            if(newFile.createNewFile()){
+                System.out.println("File Created: " + newFile.getName());
+            }
+            else {
+                System.out.println("File already exists.");
+            }
+        }
+        catch(IOException e){
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+
+    }        
+
 
     // ...
     //This method will choose the suitable command method to be called
@@ -167,9 +209,22 @@ public class Terminal {
             else if(command.equalsIgnoreCase("rmdir")){       //RMDIR // No spaces in folder name because the args are space separated
                 rmdir(arg[0]);
                 System.out.print("\n$ ");
-            }            
+            }     
+            
+            else if(command.equalsIgnoreCase("cd")){
+                if(arg.length <= 0){
+                    cd();
+                }
+                else{
+                    cd(arg[0]);
+                }
+            }
 
-            else if (command.equals("0")){                        //////Exit 
+            else if(command.equalsIgnoreCase("touch")){
+                touch(arg[0]);
+            }
+
+            else if (command.equals("0") || command.equalsIgnoreCase("exit")){                        //////Exit 
                 b = false;
             }
 
