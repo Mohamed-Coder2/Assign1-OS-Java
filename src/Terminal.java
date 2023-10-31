@@ -2,17 +2,30 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 
 public class Terminal {
 
     //Can u see the ned edit on gitHB ? :(
     private static File currentDirectory = new File(System.getProperty("user.dir"));
+    private static List<String> commandHistory = new ArrayList<>();
 
     Parser parser;
     //Implement each command in a method, for example:
+
+    public static void addCommandToHistory(String command){
+        commandHistory.add(command);
+    }
+
+    public static void history() {
+        for(int i=0; i < commandHistory.size(); i++){
+            System.out.println((i + 1) + ". " + commandHistory.get(i));
+        }
+    }
 
     public static String pwd(){
         return currentDirectory.getAbsolutePath();
@@ -176,10 +189,12 @@ public class Terminal {
             
             if(command.equalsIgnoreCase("echo")){                 ////ECHO
                 echo(arg[0]);
+                addCommandToHistory(s);
             }
         
             else if(command.equalsIgnoreCase("pwd")){             ////PWD
                 System.out.println(pwd());
+                addCommandToHistory(s);
             }
 
             else if(command.equalsIgnoreCase("ls")){              ////LS && LS -r
@@ -202,6 +217,7 @@ public class Terminal {
                     }
                     System.out.println("");
                 }
+                addCommandToHistory(s);
             }
 
             else if(command.equalsIgnoreCase("mkdir")){           //MKDIR
@@ -211,10 +227,12 @@ public class Terminal {
                 else{
                     System.out.println("Error");;
                 }
+                addCommandToHistory(s);
             }
 
             else if(command.equalsIgnoreCase("rmdir")){       //RMDIR // No spaces in folder name because the args are space separated
                 rmdir(arg[0]);
+                addCommandToHistory(s);
             }     
             
             else if(command.equalsIgnoreCase("cd")){        //CD
@@ -224,14 +242,22 @@ public class Terminal {
                 else{
                     cd(arg[0]);
                 }
+                addCommandToHistory(s);
             }
 
             else if(command.equalsIgnoreCase("touch")){    //Touch
                 touch(arg[0]);
+                addCommandToHistory(s);
             }
 
             else if(command.equalsIgnoreCase("rm")){        //RM    
                 rm(arg[0]);
+                addCommandToHistory(s);
+            }
+
+            else if(command.equalsIgnoreCase("history")){
+                addCommandToHistory(s);
+                history();
             }
 
             else if (command.equals("0") || command.equalsIgnoreCase("exit")){                        //////Exit 
