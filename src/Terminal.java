@@ -19,7 +19,7 @@ public class Terminal {
     }
 
     public static void echo(String s){
-        System.out.println(s);//it runs successfully
+        System.out.println(s);
     }
 
     public static String[] ls(){
@@ -59,22 +59,12 @@ public class Terminal {
             allDirs = new File[]{dir};
         }
 
-        System.out.println("Directory: " + dir.getAbsolutePath());
-        System.out.println("Exists: " + dir.exists());
-        System.out.println("Is directory: " + dir.isDirectory());
         if(dir.isDirectory()) {
             System.out.println("Number of subdirectories: " + (dir.listFiles(File::isDirectory).length));
         }
 
         if(allDirs != null){
             for (File file : allDirs) {
-
-                System.out.println("Trying to delete: " + file.getAbsolutePath());
-                System.out.println("Exists: " + file.exists());
-                System.out.println("Is directory: " + file.isDirectory());
-                System.out.println("Is empty: " + (file.list().length == 0));
-
-
                 if(file.list().length == 0) {
                     boolean isDeleted = file.delete();
 
@@ -133,6 +123,25 @@ public class Terminal {
 
     }        
 
+    public static void rm(String fileName) {
+        File file = new File(currentDirectory, fileName);
+
+        if (file.exists()) {
+        
+            if (file.delete()) {
+                System.out.println(fileName + " has been deleted.");
+            } 
+            
+            else {
+                System.out.println("Failed to delete " + fileName);
+            }
+
+        } 
+        
+        else {
+            System.out.println(fileName + " does not exist.");
+        }
+    }    
 
     // ...
     //This method will choose the suitable command method to be called
@@ -144,11 +153,14 @@ public class Terminal {
         
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Press 0 to exit\n$ ");
+        System.out.print("0/exit to terminate\n");
 
         boolean b = true;
         
         while(b){
+            
+            System.out.print("$ ");
+
             String s = scanner.nextLine();
             
             Parser parser = new Parser();
@@ -164,12 +176,10 @@ public class Terminal {
             
             if(command.equalsIgnoreCase("echo")){                 ////ECHO
                 echo(arg[0]);
-                System.out.print("$ ");
             }
         
             else if(command.equalsIgnoreCase("pwd")){             ////PWD
                 System.out.println(pwd());
-                System.out.print("$ ");
             }
 
             else if(command.equalsIgnoreCase("ls")){              ////LS && LS -r
@@ -190,28 +200,24 @@ public class Terminal {
                             System.out.print(string + " --- ");
                         }
                     }
+                    System.out.println("");
                 }
-
-                System.out.print("\n$ ");
             }
 
             else if(command.equalsIgnoreCase("mkdir")){           //MKDIR
                 if(mkdir(arg[0])){
-                    System.out.print("Directory created :)");
+                    System.out.println("Directory created :)");
                 }
                 else{
-                    System.out.print("ERROR ! :(");
+                    System.out.println("Error");;
                 }
-
-                System.out.print("\n$ ");
             }
 
             else if(command.equalsIgnoreCase("rmdir")){       //RMDIR // No spaces in folder name because the args are space separated
                 rmdir(arg[0]);
-                System.out.print("\n$ ");
             }     
             
-            else if(command.equalsIgnoreCase("cd")){
+            else if(command.equalsIgnoreCase("cd")){        //CD
                 if(arg.length <= 0){
                     cd();
                 }
@@ -220,8 +226,12 @@ public class Terminal {
                 }
             }
 
-            else if(command.equalsIgnoreCase("touch")){
+            else if(command.equalsIgnoreCase("touch")){    //Touch
                 touch(arg[0]);
+            }
+
+            else if(command.equalsIgnoreCase("rm")){        //RM    
+                rm(arg[0]);
             }
 
             else if (command.equals("0") || command.equalsIgnoreCase("exit")){                        //////Exit 
@@ -230,7 +240,6 @@ public class Terminal {
 
             else{                                                   //////If none are correct
                 System.out.println("UnIdentified command please refer to the Docs or the Readme file");
-                System.out.print("$ ");
             }
         }
         scanner.close();
