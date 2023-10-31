@@ -1,5 +1,9 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -10,13 +14,43 @@ import java.util.Scanner;
 
 public class Terminal {
 
-    //Can u see the ned edit on gitHB ? :(
     private static File currentDirectory = new File(System.getProperty("user.dir"));
     private static List<String> commandHistory = new ArrayList<>();
+    public static String TerminalString = new String();
 
     Parser parser;
-    //Implement each command in a method, for example:
 
+    public static void copyFile(String sourceFile, String destinationFile) {
+        
+        try {
+            Files.copy(Paths.get(sourceFile), Paths.get(destinationFile));
+        } 
+        
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    /*  
+        This method uses the Files.copy() method from the java.nio.file package to copythe file.
+        The Paths.get() method is used to convert the file paths from String to Path.
+        Please note that if the destination file already exists,
+        this method will throw a FileAlreadyExistsException.
+        If you want to overwrite the existing file, you can use the REPLACE_EXISTING 
+
+        Files.copy(Paths.get(sourceFile), 
+        Paths.get(destinationFile), 
+        StandardCopyOption.REPLACE_EXISTING);
+    */
+
+    public static void redirectOutputToFile(String filename) {
+        try {
+            PrintStream fileOut = new PrintStream(new FileOutputStream(filename));
+            System.setOut(fileOut);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+    
     public static void addCommandToHistory(String command){
         commandHistory.add(command);
     }
@@ -158,53 +192,24 @@ public class Terminal {
 
     // ...
     //This method will choose the suitable command method to be called
-    public void chooseCommandAction(){
-        //...
-    }
-
-    public static void main(String[] args){
-        
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.print("0/exit to terminate\n");
-
-        boolean b = true;
-        
-        while(b){
-            
-            System.out.print("$ ");
-
-            String s = scanner.nextLine();
-            
-            Parser parser = new Parser();
-            
-            if(parser.parse(s)){
-                //You can check here if it is parsed by printing anything
-            }
-            
-            String[] arg = parser.getArgs();
-            String command = parser.getCommandName();
-
-            ///////////////////////////////////
-            
-            if(command.equalsIgnoreCase("echo")){                 ////ECHO
+    public static void chooseCommandAction(String command, String[] arg){
+        switch (command.toLowerCase()) {
+            case "echo":
                 echo(arg[0]);
-                addCommandToHistory(s);
-            }
-        
-            else if(command.equalsIgnoreCase("pwd")){             ////PWD
+                addCommandToHistory(TerminalString);
+                break;
+            case "pwd":
                 System.out.println(pwd());
-                addCommandToHistory(s);
-            }
-
-            else if(command.equalsIgnoreCase("ls")){              ////LS && LS -r
-
+                addCommandToHistory(TerminalString);
+                break;
+            case "ls":
                 String[] list = ls();
                 String[] rList = ls();
 
                 Collections.reverse(Arrays.asList(rList));
-
+                
                 if(list != null){
+                    
                     if(arg.length > 0 && arg[0].equals("-r")){
                         for (String string : rList) {
                             System.out.print(string + " --- ");
@@ -217,56 +222,89 @@ public class Terminal {
                     }
                     System.out.println("");
                 }
-                addCommandToHistory(s);
-            }
+                addCommandToHistory(TerminalString);
 
-            else if(command.equalsIgnoreCase("mkdir")){           //MKDIR
+                break;
+            case "mkdir":
+
                 if(mkdir(arg[0])){
                     System.out.println("Directory created :)");
                 }
+
                 else{
                     System.out.println("Error");;
                 }
-                addCommandToHistory(s);
-            }
 
-            else if(command.equalsIgnoreCase("rmdir")){       //RMDIR // No spaces in folder name because the args are space separated
+                addCommandToHistory(TerminalString);
+                break;
+            case "rmdir":
+
                 rmdir(arg[0]);
-                addCommandToHistory(s);
-            }     
-            
-            else if(command.equalsIgnoreCase("cd")){        //CD
+                addCommandToHistory(TerminalString);
+
+                break;
+            case "cd":
                 if(arg.length <= 0){
                     cd();
                 }
                 else{
                     cd(arg[0]);
                 }
-                addCommandToHistory(s);
-            }
-
-            else if(command.equalsIgnoreCase("touch")){    //Touch
+                addCommandToHistory(TerminalString);
+                break;
+            case "touch":
                 touch(arg[0]);
-                addCommandToHistory(s);
-            }
-
-            else if(command.equalsIgnoreCase("rm")){        //RM    
+                addCommandToHistory(TerminalString);
+                break;
+            case "rm":
                 rm(arg[0]);
-                addCommandToHistory(s);
-            }
-
-            else if(command.equalsIgnoreCase("history")){
-                addCommandToHistory(s);
+                addCommandToHistory(TerminalString);
+                break;
+            case "history":
+                addCommandToHistory(TerminalString);
                 history();
-            }
+                break;
+            case "cp":
+                //
+                copyFile(arg[0], arg[1]);
+                addCommandToHistory(TerminalString);
+                break;
+            default:
+                break;
+        }
+    }
 
-            else if (command.equals("0") || command.equalsIgnoreCase("exit")){                        //////Exit 
+    public static void main(String[] args){
+        
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("type -exit- or 0 to terminate\n");
+
+        boolean b = true;
+        
+        while(b){
+            
+            System.out.print("$ ");
+
+            TerminalString = scanner.nextLine();
+            
+            Parser parser = new Parser();
+            
+            if(parser.parse(TerminalString)){
+                //You can check here if it is parsed by printing anything
+            }
+            
+            String[] arg = parser.getArgs();
+            String command = parser.getCommandName();
+
+            ///////////////////////////////////
+            
+            chooseCommandAction(command, arg);
+
+            if(command.equalsIgnoreCase("exit") || command.equalsIgnoreCase("0")){
                 b = false;
             }
 
-            else{                                                   //////If none are correct
-                System.out.println("UnIdentified command please refer to the Docs or the Readme file");
-            }
         }
         scanner.close();
     }
