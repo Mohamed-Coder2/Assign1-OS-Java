@@ -1,11 +1,17 @@
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,6 +25,92 @@ public class Terminal {
     public static String TerminalString = new String();
 
     Parser parser;
+
+    public static void printFileContent(String filePath) {
+        File file = new File(filePath);
+        
+        if (file.exists() && file.isFile()) {
+            
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            } 
+
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        } 
+
+        else {
+            System.err.println("File not found or not a regular file: " + filePath);
+        }
+    }
+
+    public static void concatenateAndPrintFiles(String filePath1, String filePath2) {
+        File file1 = new File(filePath1);
+        File file2 = new File(filePath2);
+
+        if (file1.exists() && file1.isFile() && file2.exists() && file2.isFile()) {
+            try (BufferedReader reader1 = new BufferedReader(new FileReader(file1));
+                 BufferedReader reader2 = new BufferedReader(new FileReader(file2))) {
+
+                String line;
+                while ((line = reader1.readLine()) != null) {
+                    System.out.println(line);
+                }
+
+                System.out.println(); // Add a separator between files
+
+                while ((line = reader2.readLine()) != null) {
+                    System.out.println(line);
+                }
+            }
+
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        } 
+        
+        else {
+            System.err.println("One or both files not found or not regular files: " + filePath1 + ", " + filePath2);
+        }
+    }
+
+    public static void copyDirectory(String sourcePath, String destinationPath) {
+        Path sourceDir = Paths.get(sourcePath);
+        Path destinationDir = Paths.get(destinationPath);
+
+        try {
+            if (!Files.exists(destinationDir)) {
+                Files.createDirectories(destinationDir);
+            }
+
+            Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Path targetFile = destinationDir.resolve(sourceDir.relativize(file));
+                    Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetDir = destinationDir.resolve(sourceDir.relativize(dir));
+                    if (!Files.exists(targetDir)) {
+                        Files.createDirectory(targetDir);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+            System.out.println("Directory copied successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void copyFile(String sourceFile, String destinationFile) {
         
@@ -266,8 +358,38 @@ public class Terminal {
                 break;
             case "cp":
                 //
+                if(arg[0].equals("-r")){
+                    
+                    if(arg.length == 3){
+                        copyDirectory(arg[1], arg[2]);
+                        addCommandToHistory(TerminalString);
+                        break;
+                    }
+
+                    System.out.println("Please specify directories");
+
+                    break;
+                }
                 copyFile(arg[0], arg[1]);
                 addCommandToHistory(TerminalString);
+                break;
+            
+            case "cat":
+                if(arg.length == 1){
+                    printFileContent(arg[0]);
+                    addCommandToHistory(TerminalString);
+                    break;
+                }
+
+                else if(arg.length == 2){
+                    
+                    concatenateAndPrintFiles(arg[0], arg[1]);
+
+                    addCommandToHistory(TerminalString);
+                    break;
+                }
+
+                System.out.println("Please refer to the manual to learn how to use our handmade Terminal :)");  
                 break;
             default:
                 break;
