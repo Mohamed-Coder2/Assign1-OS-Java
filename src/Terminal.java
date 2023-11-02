@@ -1,52 +1,125 @@
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
-public class Terminal {
+//13 commands were implemented
+//echo --- pwd --- ls & ls-r --- mkdir --- rmdir --- cd
+//touch --- rm --- history --- cp & cp -r --- cat
 
+public class Terminal {  
+    
     private static File currentDirectory = new File(System.getProperty("user.dir"));
     private static List<String> commandHistory = new ArrayList<>();
     public static String TerminalString = new String();
 
     Parser parser;
 
-    public static void copyFile(String sourceFile, String destinationFile) {
+    public static void printFileContent(String filePath) {
+        File file = new File(filePath);
+        
+        if (file.exists() && file.isFile()) {
+            
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            } 
+
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        } 
+
+        else {
+            System.err.println("File not found or not a regular file: " + filePath);
+        }
+    }
+
+    public static void concatenateAndPrintFiles(String filePath1, String filePath2) {
+        File file1 = new File(filePath1);
+        File file2 = new File(filePath2);
+
+        if (file1.exists() && file1.isFile() && file2.exists() && file2.isFile()) {
+            try (BufferedReader reader1 = new BufferedReader(new FileReader(file1));
+                 BufferedReader reader2 = new BufferedReader(new FileReader(file2))) {
+
+                String line;
+                while ((line = reader1.readLine()) != null) {
+                    System.out.println(line);
+                }
+
+                System.out.println(); // Add a separator between files
+
+                while ((line = reader2.readLine()) != null) {
+                    System.out.println(line);
+                }
+            }
+
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        } 
+        
+        else {
+            System.err.println("One or both files not found or not regular files: " + filePath1 + ", " + filePath2);
+        }
+    }
+
+    public static void copyDirectory(String sourcePath, String destinationPath) {
+        Path sourceDir = Paths.get(sourcePath);
+        Path destinationDir = Paths.get(destinationPath);
+
+        try {
+            if (!Files.exists(destinationDir)) {
+                Files.createDirectories(destinationDir);
+            }
+
+            Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Path targetFile = destinationDir.resolve(sourceDir.relativize(file));
+                    Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetDir = destinationDir.resolve(sourceDir.relativize(dir));
+                    if (!Files.exists(targetDir)) {
+                        Files.createDirectory(targetDir);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+            System.out.println("Directory copied successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void copyFile(String sourceFile, String destinationFile) {    
         
         try {
             Files.copy(Paths.get(sourceFile), Paths.get(destinationFile));
         } 
         
         catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    /*  
-        This method uses the Files.copy() method from the java.nio.file package to copythe file.
-        The Paths.get() method is used to convert the file paths from String to Path.
-        Please note that if the destination file already exists,
-        this method will throw a FileAlreadyExistsException.
-        If you want to overwrite the existing file, you can use the REPLACE_EXISTING 
-
-        Files.copy(Paths.get(sourceFile), 
-        Paths.get(destinationFile), 
-        StandardCopyOption.REPLACE_EXISTING);
-    */
-
-    public static void redirectOutputToFile(String filename) {
-        try {
-            PrintStream fileOut = new PrintStream(new FileOutputStream(filename));
-            System.setOut(fileOut);
-        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -80,52 +153,40 @@ public class Terminal {
     public static boolean mkdir(String folderPath){
         File file = new File(folderPath);
 
+        if(!file.isAbsolute()){
+            file = new File(currentDirectory, folderPath);
+        }
+
         boolean isCreated = file.mkdir();
 
         return isCreated;
     }
 
-    public static void rmdir(String st){
-        String dirPath = "";
-        
-        if(st.equals("*")){
-            dirPath = ".";  // Current directory
-        }
-        else{
-            dirPath = st;  // Target directory
-        }
-
-        File dir = new File(dirPath);
-        
-        File[] allDirs;
-
-        if(st.equals("*")){
-            allDirs = dir.listFiles(File::isDirectory);
-        }
-        else{
-            allDirs = new File[]{dir};
-        }
-
-        if(dir.isDirectory()) {
-            System.out.println("Number of subdirectories: " + (dir.listFiles(File::isDirectory).length));
-        }
-
-        if(allDirs != null){
-            for (File file : allDirs) {
-                if(file.list().length == 0) {
-                    boolean isDeleted = file.delete();
-
-                    if(isDeleted){
-                        System.out.println("Directory " + file.getName() + " deleted successfully");
+    public static void rmdir(String st) {
+        String dirPath = new String();
+    
+        if (st.equals("*")) {
+            dirPath = "."; // Current directory
+        } else {
+            File targetDir = new File(currentDirectory, st);
+    
+            if (targetDir.exists() && targetDir.isDirectory()) {
+                if (targetDir.list().length == 0) {
+                    boolean isDeleted = targetDir.delete();
+    
+                    if (isDeleted) {
+                        System.out.println("Directory " + targetDir.getName() + " deleted :(");
+                    } else {
+                        System.out.println("Failed to delete directory " + targetDir.getName());
                     }
-                    else{
-                        System.out.println("Failed to delete directory " + file.getName());
-                    }
+                } else {
+                    System.out.println("Directory is not empty: " + targetDir.getName());
                 }
+            } else {
+                System.out.println("Directory not found: " + st);
             }
         }
-
-    }
+    }           
 
     public static void cd(){
         currentDirectory = new File(System.getProperty("user.dir"));
@@ -190,8 +251,6 @@ public class Terminal {
         }
     }    
 
-    // ...
-    //This method will choose the suitable command method to be called
     public static void chooseCommandAction(String command, String[] arg){
         switch (command.toLowerCase()) {
             case "echo":
@@ -202,7 +261,7 @@ public class Terminal {
                 System.out.println(pwd());
                 addCommandToHistory(TerminalString);
                 break;
-            case "ls":
+            case "ls":  //ls & ls -r
                 String[] list = ls();
                 String[] rList = ls();
 
@@ -264,10 +323,39 @@ public class Terminal {
                 addCommandToHistory(TerminalString);
                 history();
                 break;
-            case "cp":
-                //
+            case "cp":  //cp & cp-r
+                if(arg[0].equals("-r")){
+                    
+                    if(arg.length == 3){
+                        copyDirectory(arg[1], arg[2]);
+                        addCommandToHistory(TerminalString);
+                        break;
+                    }
+
+                    System.out.println("Please specify directories");
+
+                    break;
+                }
                 copyFile(arg[0], arg[1]);
                 addCommandToHistory(TerminalString);
+                break;
+            
+            case "cat": 
+                if(arg.length == 1){
+                    printFileContent(arg[0]);
+                    addCommandToHistory(TerminalString);
+                    break;
+                }
+
+                else if(arg.length == 2){
+                    
+                    concatenateAndPrintFiles(arg[0], arg[1]);
+
+                    addCommandToHistory(TerminalString);
+                    break;
+                }
+
+                System.out.println("Please refer to the manual to learn how to use our handmade Terminal :)");  
                 break;
             default:
                 break;
@@ -311,11 +399,9 @@ public class Terminal {
 }
 
 class Parser {
-String commandName;
+    String commandName;
     String[] args;
     String command;
-    //This method will divide the input into commandName and args
-    //where "input" is the string command entered by the user
 
     public boolean parse(String input){
         String[] holder = input.split(" ");
@@ -340,4 +426,3 @@ String commandName;
     }
 
 }
-
