@@ -156,52 +156,40 @@ public class Terminal {
     public static boolean mkdir(String folderPath){
         File file = new File(folderPath);
 
+        if(!file.isAbsolute()){
+            file = new File(currentDirectory, folderPath);
+        }
+
         boolean isCreated = file.mkdir();
 
         return isCreated;
     }
 
-    public static void rmdir(String st){
+    public static void rmdir(String st) {
         String dirPath = "";
-        
-        if(st.equals("*")){
-            dirPath = ".";  // Current directory
-        }
-        else{
-            dirPath = st;  // Target directory
-        }
-
-        File dir = new File(dirPath);
-        
-        File[] allDirs;
-
-        if(st.equals("*")){
-            allDirs = dir.listFiles(File::isDirectory);
-        }
-        else{
-            allDirs = new File[]{dir};
-        }
-
-        if(dir.isDirectory()) {
-            System.out.println("Number of subdirectories: " + (dir.listFiles(File::isDirectory).length));
-        }
-
-        if(allDirs != null){
-            for (File file : allDirs) {
-                if(file.list().length == 0) {
-                    boolean isDeleted = file.delete();
-
-                    if(isDeleted){
-                        System.out.println("Directory " + file.getName() + " deleted successfully");
+    
+        if (st.equals("*")) {
+            dirPath = "."; // Current directory
+        } else {
+            File targetDir = new File(currentDirectory, st);
+    
+            if (targetDir.exists() && targetDir.isDirectory()) {
+                if (targetDir.list().length == 0) {
+                    boolean isDeleted = targetDir.delete();
+    
+                    if (isDeleted) {
+                        System.out.println("Directory " + targetDir.getName() + " deleted successfully");
+                    } else {
+                        System.out.println("Failed to delete directory " + targetDir.getName());
                     }
-                    else{
-                        System.out.println("Failed to delete directory " + file.getName());
-                    }
+                } else {
+                    System.out.println("Directory is not empty: " + targetDir.getName());
                 }
+            } else {
+                System.out.println("Directory not found: " + st);
             }
         }
-
-    }
+    }           
 
     public static void cd(){
         currentDirectory = new File(System.getProperty("user.dir"));
@@ -414,7 +402,7 @@ public class Terminal {
 }
 
 class Parser {
-String commandName;
+    String commandName;
     String[] args;
     String command;
 
