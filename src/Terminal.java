@@ -18,8 +18,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
-public class Terminal {
+//13 commands were implemented
+//echo --- pwd --- ls & ls-r --- mkdir --- rmdir --- cd
+//touch --- rm --- history --- cp & cp -r --- cat
 
+public class Terminal {  
+    
     private static File currentDirectory = new File(System.getProperty("user.dir"));
     private static List<String> commandHistory = new ArrayList<>();
     public static String TerminalString = new String();
@@ -112,33 +116,13 @@ public class Terminal {
         }
     }
 
-    public static void copyFile(String sourceFile, String destinationFile) {
+    public static void copyFile(String sourceFile, String destinationFile) {    
         
         try {
             Files.copy(Paths.get(sourceFile), Paths.get(destinationFile));
         } 
         
         catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    /*  
-        This method uses the Files.copy() method from the java.nio.file package to copythe file.
-        The Paths.get() method is used to convert the file paths from String to Path.
-        Please note that if the destination file already exists,
-        this method will throw a FileAlreadyExistsException.
-        If you want to overwrite the existing file, you can use the REPLACE_EXISTING 
-
-        Files.copy(Paths.get(sourceFile), 
-        Paths.get(destinationFile), 
-        StandardCopyOption.REPLACE_EXISTING);
-    */
-
-    public static void redirectOutputToFile(String filename) {
-        try {
-            PrintStream fileOut = new PrintStream(new FileOutputStream(filename));
-            System.setOut(fileOut);
-        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -282,8 +266,6 @@ public class Terminal {
         }
     }    
 
-    // ...
-    //This method will choose the suitable command method to be called
     public static void chooseCommandAction(String command, String[] arg){
         switch (command.toLowerCase()) {
             case "echo":
@@ -294,7 +276,7 @@ public class Terminal {
                 System.out.println(pwd());
                 addCommandToHistory(TerminalString);
                 break;
-            case "ls":
+            case "ls":  //ls & ls -r
                 String[] list = ls();
                 String[] rList = ls();
 
@@ -356,8 +338,7 @@ public class Terminal {
                 addCommandToHistory(TerminalString);
                 history();
                 break;
-            case "cp":
-                //
+            case "cp":  //cp & cp-r
                 if(arg[0].equals("-r")){
                     
                     if(arg.length == 3){
@@ -374,7 +355,7 @@ public class Terminal {
                 addCommandToHistory(TerminalString);
                 break;
             
-            case "cat":
+            case "cat": 
                 if(arg.length == 1){
                     printFileContent(arg[0]);
                     addCommandToHistory(TerminalString);
@@ -436,8 +417,6 @@ class Parser {
 String commandName;
     String[] args;
     String command;
-    //This method will divide the input into commandName and args
-    //where "input" is the string command entered by the user
 
     public boolean parse(String input){
         String[] holder = input.split(" ");
