@@ -21,13 +21,13 @@ import java.util.Scanner;
 
 public class Terminal {  
     
-    private static File currentDirectory = new File(System.getProperty("user.dir"));
-    private static List<String> commandHistory = new ArrayList<>();
-    public static String TerminalString = new String();
+    private static File currentDirectory = new File(System.getProperty("user.dir")); //global variable to know the directory and can be changed by multiple methods
+    private static List<String> commandHistory = new ArrayList<>(); //a List so everytime a correct command is written we can add it to this list and later on return it by "History command"
+    public static String TerminalString = new String(); //The String that is written in the terminal and later parsed
 
     Parser parser;
 
-    public static void printFileContent(String filePath) {
+    public static void printFileContent(String filePath) {  //to be used by "cat" if there was one argument
         File file = new File(filePath);
         
         if (file.exists() && file.isFile()) {
@@ -50,7 +50,7 @@ public class Terminal {
         }
     }
 
-    public static void concatenateAndPrintFiles(String filePath1, String filePath2) {
+    public static void concatenateAndPrintFiles(String filePath1, String filePath2) {   //exactly the same as printFileContent but added another bufferReader to read the other file
         File file1 = new File(filePath1);
         File file2 = new File(filePath2);
 
@@ -80,7 +80,7 @@ public class Terminal {
         }
     }
 
-    public static void copyDirectory(String sourcePath, String destinationPath) {
+    public static void copyDirectory(String sourcePath, String destinationPath) {   //cp -r , copies a full directory into another directory 
         Path sourceDir = Paths.get(sourcePath);
         Path destinationDir = Paths.get(destinationPath);
 
@@ -113,7 +113,7 @@ public class Terminal {
         }
     }
 
-    public static void copyFile(String sourceFile, String destinationFile) {    
+    public static void copyFile(String sourceFile, String destinationFile) {   //cp, copies a file and paste it unto another  
         
         try {
             Files.copy(Paths.get(sourceFile), Paths.get(destinationFile));
@@ -124,33 +124,33 @@ public class Terminal {
         }
     }
     
-    public static void addCommandToHistory(String command){
+    public static void addCommandToHistory(String command){ //updates the History list mentioned previously
         commandHistory.add(command);
     }
 
-    public static void history() {
+    public static void history() {  //iterates over the commandHistory list
         for(int i=0; i < commandHistory.size(); i++){
             System.out.println((i + 1) + ". " + commandHistory.get(i));
         }
     }
 
-    public static String pwd(){
+    public static String pwd(){ //returns the current Directory
         return currentDirectory.getAbsolutePath();
     }
 
-    public static void echo(String s){
+    public static void echo(String s){  //console logs out the specified String
         System.out.println(s);
     }
 
-    public static String[] ls(){
+    public static String[] ls(){    //returns a list of the files in the current directory
 
-        File file = new File(".");
+        File file = currentDirectory;
         String list[] = file.list();
 
         return list;
     }
 
-    public static boolean mkdir(String folderPath){
+    public static boolean mkdir(String folderPath){     //makes a folder
         File file = new File(folderPath);
 
         if(!file.isAbsolute()){
@@ -162,7 +162,7 @@ public class Terminal {
         return isCreated;
     }
 
-    public static void rmdir(String st) {
+    public static void rmdir(String st) {       //removes a folder
         String dirPath = new String();
     
         if (st.equals("*")) {
@@ -188,11 +188,11 @@ public class Terminal {
         }
     }           
 
-    public static void cd(){
+    public static void cd(){    //cd implementation of no arguments which goes back to the root
         currentDirectory = new File(System.getProperty("user.dir"));
     }
 
-    public static void cd(String path){
+    public static void cd(String path){     //cd implementation of one argument which can be .. or a path
         if(path.equals("..")){
             Path parentPath = Paths.get(currentDirectory.getAbsolutePath()).getParent();
             if(parentPath != null){
@@ -213,7 +213,7 @@ public class Terminal {
         }
     }
 
-    public static void touch(String path){
+    public static void touch(String path){  //creates a file
         File newFile = new File(currentDirectory, path);
     
         try{
@@ -231,7 +231,7 @@ public class Terminal {
 
     }        
 
-    public static void rm(String fileName) {
+    public static void rm(String fileName) {    //removes a file
         File file = new File(currentDirectory, fileName);
 
         if (file.exists()) {
@@ -251,7 +251,7 @@ public class Terminal {
         }
     }    
 
-    public static void chooseCommandAction(String command, String[] arg){
+    public static void chooseCommandAction(String command, String[] arg){   //switch case on every possible method
         switch (command.toLowerCase()) {
             case "echo":
                 echo(arg[0]);
